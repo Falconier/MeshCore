@@ -4,8 +4,8 @@
 #include "MyMesh.h"
 
 #ifdef DISPLAY_CLASS
-  #include "UITask.h"
-  static UITask ui_task(display);
+#include "UITask.h"
+static UITask ui_task(display);
 #endif
 
 StdRNG fast_rng;
@@ -14,6 +14,10 @@ SimpleMeshTables tables;
 MyMesh the_mesh(board, radio_driver, *new ArduinoMillis(), fast_rng, rtc_clock, tables);
 
 #define TARGET_NODE_ID 0X12345678
+
+bool isTargetNode(mesh::NodeId target_node_id) {
+  return (node_id == TARGET_NODE_ID);
+}
 
 void halt() {
   while (1) ;
@@ -28,6 +32,33 @@ unsigned long POWERSAVING_FIRSTSLEEP_SECS = 120; // The first sleep (if enabled)
 static unsigned long userBtnDownAt = 0;
 #define USER_BTN_HOLD_OFF_MILLIS 1500
 #endif
+
+void boosterPacketCallback(const mesh::Packet& packet) {
+    mesh::NodeId sender = packet.getSender();
+    mesh::NodeId dest = packet.getDestination();
+
+    Serial.print("Packet received | From: 0x");
+    Serial.print(sender, HEX);
+    Serial.print(" To: 0x");
+    Serial.println(dest, HEX);
+
+    // Case 1: Packet FROM the target → boost it outward
+    if (isTargetDevice(sender)) {
+        Serial.println("BOOSTING packet from target!");
+        the_mesh.forwardPacket(packet);   // or use existing relay function
+        return;
+    }
+
+    // Case 2: Packet going TO the target → direct it only to target
+    if (isTargetDevice(dest)) {
+        Serial.println("DIRECTING packet to target");
+        the_mesh.sendPacketTo(packet, TARGET_NODE_ID);  // directed send
+        return;
+    }
+
+    // Case 3: Everything else → drop (strict booster mode)
+    Serial.println("Dropping unrelated packet");
+}
 
 void setup() {
   Serial.begin(115200);
@@ -96,6 +127,8 @@ void setup() {
   sensors.begin();
 
   the_mesh.begin(fs);
+  
+  the_mesh.setPacketReceivedCallback(boosterPacketCallback);
 
 #ifdef DISPLAY_CLASS
   ui_task.begin(the_mesh.getNodePrefs(), FIRMWARE_BUILD_DATE, FIRMWARE_VERSION);

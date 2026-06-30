@@ -68,7 +68,7 @@ void UITask::renderCurrScreen() {
     _display->print(_version_info);
 
     // node type
-    const char* node_type = "< Repeater >";
+    const char* node_type = "< Booster >";
     uint16_t typeWidth = _display->getTextWidth(node_type);
     _display->setCursor((_display->width() - typeWidth) / 2, 48);
     _display->print(node_type);

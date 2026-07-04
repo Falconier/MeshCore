@@ -4,16 +4,16 @@
 /* ------------------------------ Config -------------------------------- */
 
 #ifndef LORA_FREQ
-  #define LORA_FREQ 915.0
+  #define LORA_FREQ 918.0
 #endif
 #ifndef LORA_BW
-  #define LORA_BW 250
+  #define LORA_BW 62.5
 #endif
 #ifndef LORA_SF
-  #define LORA_SF 10
+  #define LORA_SF 7
 #endif
 #ifndef LORA_CR
-  #define LORA_CR 5
+  #define LORA_CR 8
 #endif
 #ifndef LORA_TX_POWER
   #define LORA_TX_POWER 20
@@ -129,7 +129,7 @@ uint8_t MyMesh::handleLoginReq(const mesh::Identity& sender, const uint8_t* secr
   }
 
   if (is_flood) {
-    client->out_path_len = OUT_PATH_UNKNOWN;  // need to rediscover out_path
+    client->out_path_len = OUT_PATH_UNKNOWN;  // need to re  boosterPacketCallbackcover out_path
   }
 
   uint32_t now = getRTCClock()->getCurrentTimeUnique();
@@ -419,9 +419,11 @@ void MyMesh::sendFloodReply(mesh::Packet* packet, unsigned long delay_millis, ui
     if (region_map.getTransportKeysFor(*recv_pkt_region, &scope, 1) > 0) {
       sendFloodScoped(scope, packet, delay_millis, path_hash_size);
     } else {
+      applyTempRadioParams(918.0f, 62.5f, 7, 8, 1); // apply temporary radio params for 1 second
       sendFlood(packet, delay_millis, path_hash_size);  // send un-scoped
     }
   } else {
+    
     sendFlood(packet, delay_millis, path_hash_size);  // send un-scoped
   }
 }
@@ -987,14 +989,14 @@ void MyMesh::sendFloodScoped(const TransportKey& scope, mesh::Packet* pkt, uint3
   }
 }
 
-void MyMesh::applyTempRadioParams(float freq, float bw, uint8_t sf, uint8_t cr, int timeout_mins) {
-  set_radio_at = futureMillis(2000); // give CLI reply some time to be sent back, before applying temp radio params
+void MyMesh::applyTempRadioParams(float freq, float bw, uint8_t sf, uint8_t cr, int timeout_secs) {
+  set_radio_at = futureMillis(500); // give CLI reply some time to be sent back, before applying temp radio params
   pending_freq = freq;
   pending_bw = bw;
   pending_sf = sf;
   pending_cr = cr;
 
-  revert_radio_at = futureMillis(2000 + timeout_mins * 60 * 1000); // schedule when to revert radio params
+  revert_radio_at = futureMillis(2000 + timeout_secs * 1000); // schedule when to revert radio params
 }
 
 bool MyMesh::formatFileSystem() {

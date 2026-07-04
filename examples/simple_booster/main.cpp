@@ -8,16 +8,15 @@
 static UITask ui_task(display);
 #endif
 
+#define radio_freq
+#define radio_bw
+#define radio_sf
+#define radio_cr
+
 StdRNG fast_rng;
 SimpleMeshTables tables;
 
 MyMesh the_mesh(board, radio_driver, *new ArduinoMillis(), fast_rng, rtc_clock, tables);
-
-#define TARGET_NODE_ID 0X12345678
-
-bool isTargetNode(mesh::NodeId target_node_id) {
-  return (node_id == TARGET_NODE_ID);
-}
 
 void halt() {
   while (1) ;
@@ -33,31 +32,19 @@ static unsigned long userBtnDownAt = 0;
 #define USER_BTN_HOLD_OFF_MILLIS 1500
 #endif
 
-void boosterPacketCallback(const mesh::Packet& packet) {
-    mesh::NodeId sender = packet.getSender();
-    mesh::NodeId dest = packet.getDestination();
+void boosterPacketCallback(mesh::Packet& packet) {
+  // get the default receiver frequency, so we can restore it after boosting
+  float originalFreq = the_mesh.getNodePrefs()->freq;
+  float pending_bw = the_mesh.getNodePrefs()->bw;
+  uint8_t pending_sf = the_mesh.getNodePrefs()->sf;
+  uint8_t pending_cr = the_mesh.getNodePrefs()->cr;
 
-    Serial.print("Packet received | From: 0x");
-    Serial.print(sender, HEX);
-    Serial.print(" To: 0x");
-    Serial.println(dest, HEX);
+  float pending_freq = 918.00f;
 
-    // Case 1: Packet FROM the target → boost it outward
-    if (isTargetDevice(sender)) {
-        Serial.println("BOOSTING packet from target!");
-        the_mesh.forwardPacket(packet);   // or use existing relay function
-        return;
-    }
-
-    // Case 2: Packet going TO the target → direct it only to target
-    if (isTargetDevice(dest)) {
-        Serial.println("DIRECTING packet to target");
-        the_mesh.sendPacketTo(packet, TARGET_NODE_ID);  // directed send
-        return;
-    }
-
-    // Case 3: Everything else → drop (strict booster mode)
-    Serial.println("Dropping unrelated packet");
+  radio_driver.setParams(pending_freq, pending_bw, pending_sf, pending_cr);
+  the_mesh.applyTempRadioParams(pending_freq, pending_bw, pending_sf, pending_cr, 1); // apply temporary radio params for 60 seconds
+  Serial.println("Temp Param applied for 1 second");
+  the_mesh.sendPacket(&packet, 0, 0); //send the packet
 }
 
 void setup() {
@@ -65,9 +52,6 @@ void setup() {
   delay(1000);
 
   Serial.println("Starting Booster...");
-  Serial.println("Targert Node ID: 0x12345678");
-  Serial.println(TARGET_NODE_ID, HEX);
-
   board.begin();
 
 #if defined(MESH_DEBUG) && defined(NRF52_PLATFORM)
@@ -127,8 +111,6 @@ void setup() {
   sensors.begin();
 
   the_mesh.begin(fs);
-  
-  the_mesh.setPacketReceivedCallback(boosterPacketCallback);
 
 #ifdef DISPLAY_CLASS
   ui_task.begin(the_mesh.getNodePrefs(), FIRMWARE_BUILD_DATE, FIRMWARE_VERSION);
@@ -141,7 +123,6 @@ void setup() {
 
   board.onBootComplete();
 
-  Serial.println("Booster started - directing traffic to node: $(TARGET_NODE_ID)");
 }
 
 void loop() {
@@ -192,6 +173,7 @@ void loop() {
   ui_task.loop();
 #endif
   rtc_clock.tick();
+
 
   if (the_mesh.getNodePrefs()->powersaving_enabled && !the_mesh.hasPendingWork()) {
 #if defined(NRF52_PLATFORM)

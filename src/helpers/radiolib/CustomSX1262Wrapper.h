@@ -10,7 +10,9 @@
 
 class CustomSX1262Wrapper : public RadioLibWrapper {
 public:
-  CustomSX1262Wrapper(CustomSX1262& radio, mesh::MainBoard& board) : RadioLibWrapper(radio, board) { }
+  CustomSX1262Wrapper(CustomSX1262 &radio, mesh::MainBoard &board) : RadioLibWrapper(radio, board) {}
+
+  void setFrequency(float freq) { ((CustomSX1262 *)_radio)->setFrequency(freq); }
 
   void setParams(float freq, float bw, uint8_t sf, uint8_t cr) override {
     ((CustomSX1262 *)_radio)->setFrequency(freq);
@@ -20,12 +22,8 @@ public:
     updatePreamble(sf);
   }
 
-  bool isReceivingPacket() override { 
-    return ((CustomSX1262 *)_radio)->isReceiving();
-  }
-  float getCurrentRSSI() override {
-    return ((CustomSX1262 *)_radio)->getRSSI(false);
-  }
+  bool isReceivingPacket() override { return ((CustomSX1262 *)_radio)->isReceiving(); }
+  float getCurrentRSSI() override { return ((CustomSX1262 *)_radio)->getRSSI(false); }
   float getLastRSSI() const override { return ((CustomSX1262 *)_radio)->getRSSI(); }
   float getLastSNR() const override { return ((CustomSX1262 *)_radio)->getSNR(); }
 
@@ -34,16 +32,10 @@ public:
     return packetScoreInt(snr, sf, packet_len);
   }
   uint8_t getSpreadingFactor() const override { return ((CustomSX1262 *)_radio)->spreadingFactor; }
-  virtual void powerOff() override {
-    ((CustomSX1262 *)_radio)->sleep(false);
-  }
+  virtual void powerOff() override { ((CustomSX1262 *)_radio)->sleep(false); }
 
   void doResetAGC() override { sx126xResetAGC((SX126x *)_radio); }
 
-  void setRxBoostedGainMode(bool en) override {
-    ((CustomSX1262 *)_radio)->setRxBoostedGainMode(en);
-  }
-  bool getRxBoostedGainMode() const override {
-    return ((CustomSX1262 *)_radio)->getRxBoostedGainMode();
-  }
+  void setRxBoostedGainMode(bool en) override { ((CustomSX1262 *)_radio)->setRxBoostedGainMode(en); }
+  bool getRxBoostedGainMode() const override { return ((CustomSX1262 *)_radio)->getRxBoostedGainMode(); }
 };

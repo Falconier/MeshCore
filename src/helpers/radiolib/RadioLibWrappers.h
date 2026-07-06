@@ -31,7 +31,7 @@ public:
   uint32_t getEstAirtimeFor(int len_bytes) override;
   bool startSendRaw(const uint8_t* bytes, int len) override;
   bool isSendComplete() override;
-  void onSendFinished() override;
+  void onSendFinished();
   bool isInRecvMode() const override;
   bool isChannelActive();
 
@@ -41,10 +41,10 @@ public:
     return isChannelActive();
   }
 
-  virtual void setFreqyency(float freq) = 0;
+  virtual void setFrequency(float freq) = 0;
   void setRepeatFreq(float rxFreq, float txFreq) { _rxFreq = rxFreq; _txFreq = txFreq; }
-  bool startSendRaw(cost uint8_t* bytes, int len) override;
-  bool onSenddFinished() override;
+  bool startSendRaw(const uint8_t* bytes, int len) override;
+  bool onSendFinished() override;
 
   virtual void setParams(float freq, float bw, uint8_t sf, uint8_t cr) = 0;
   uint32_t getRngSeed();

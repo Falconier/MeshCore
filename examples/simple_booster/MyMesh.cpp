@@ -3,8 +3,11 @@
 
 /* ------------------------------ Config -------------------------------- */
 
-#ifndef LORA_FREQ
-  #define LORA_FREQ 918.0
+#ifndef RX_FREQ
+  #define RX_FREQ 910.525
+#endif
+#ifndef TX_FREQ
+  #define TX_FREQ 918.0
 #endif
 #ifndef LORA_BW
   #define LORA_BW 62.5
@@ -896,6 +899,7 @@ MyMesh::MyMesh(mesh::MainBoard &board, mesh::Radio &radio, mesh::MillisecondCloc
   _prefs.flood_max_unscoped = 64;
   _prefs.flood_max_advert = 8;
   _prefs.interference_threshold = 0; // disabled
+  radio.setRepeatFrequencies(RX_FREQ,TX_FREQ);
 
   // bridge defaults
   _prefs.bridge_enabled = 1;    // enabled

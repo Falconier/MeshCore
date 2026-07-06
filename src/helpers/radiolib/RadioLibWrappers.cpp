@@ -151,7 +151,8 @@ uint32_t RadioLibWrapper::getEstAirtimeFor(int len_bytes) {
 }
 
 bool RadioLibWrapper::startSendRaw(const uint8_t* bytes, int len) {
-  _board->onBeforeTransmit();
+  if (_txFreq != 0) setFrequency(_txFreq); // switch to transmit frequency
+   _board->onBeforeTransmit();
   int err = _radio->startTransmit((uint8_t *) bytes, len);
   if (err == RADIOLIB_ERR_NONE) {
     state = STATE_TX_WAIT;
@@ -174,6 +175,7 @@ bool RadioLibWrapper::isSendComplete() {
 
 void RadioLibWrapper::onSendFinished() {
   _radio->finishTransmit();
+  if (_rxFreq != 0) setFrequency(_rxFreq); // restore receive frequency
   _board->onAfterTransmit();
   state = STATE_IDLE;
 }
@@ -211,4 +213,3 @@ float RadioLibWrapper::packetScoreInt(float snr, int sf, int packet_len) {
 
   return max(0.0, min(1.0, success_rate_based_on_snr * collision_penalty));
 }
-

@@ -19,6 +19,9 @@ protected:
   virtual bool isReceivingPacket() =0;
   virtual void doResetAGC();
 
+  float _rxFreq;
+  float _txFreq;
+
 public:
   RadioLibWrapper(PhysicalLayer& radio, mesh::MainBoard& board) : _radio(&radio), _board(&board), _preamble_sf(0) { n_recv = n_sent = 0; }
 
@@ -37,6 +40,11 @@ public:
 
     return isChannelActive();
   }
+
+  virtual void setFreqyency(float freq) = 0;
+  void setRepeatFreq(float rxFreq, float txFreq) { _rxFreq = rxFreq; _txFreq = txFreq; }
+  bool startSendRaw(cost uint8_t* bytes, int len) override;
+  bool onSenddFinished() override;
 
   virtual void setParams(float freq, float bw, uint8_t sf, uint8_t cr) = 0;
   uint32_t getRngSeed();

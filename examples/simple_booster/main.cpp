@@ -32,21 +32,6 @@ static unsigned long userBtnDownAt = 0;
 #define USER_BTN_HOLD_OFF_MILLIS 1500
 #endif
 
-void boosterPacketCallback(mesh::Packet& packet) {
-  // get the default receiver frequency, so we can restore it after boosting
-  float originalFreq = the_mesh.getNodePrefs()->freq;
-  float pending_bw = the_mesh.getNodePrefs()->bw;
-  uint8_t pending_sf = the_mesh.getNodePrefs()->sf;
-  uint8_t pending_cr = the_mesh.getNodePrefs()->cr;
-
-  float pending_freq = 918.00f;
-
-  radio_driver.setParams(pending_freq, pending_bw, pending_sf, pending_cr);
-  the_mesh.applyTempRadioParams(pending_freq, pending_bw, pending_sf, pending_cr, 1); // apply temporary radio params for 60 seconds
-  Serial.println("Temp Param applied for 1 second");
-  the_mesh.sendPacket(&packet, 0, 0); //send the packet
-}
-
 void setup() {
   Serial.begin(115200);
   delay(1000);

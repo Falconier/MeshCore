@@ -417,13 +417,14 @@ void MyMesh::sendFloodReply(mesh::Packet* packet, unsigned long delay_millis, ui
   if (recv_pkt_region && !recv_pkt_region->isWildcard()) {  // if _request_ packet scope is known, send reply with same scope
     TransportKey scope;
     if (region_map.getTransportKeysFor(*recv_pkt_region, &scope, 1) > 0) {
+      applyTempRadioParams(918.0f, 62.5f, 7, 8, 2); // apply temporary radio params for 1 second
       sendFloodScoped(scope, packet, delay_millis, path_hash_size);
     } else {
-      applyTempRadioParams(918.0f, 62.5f, 7, 8, 1); // apply temporary radio params for 1 second
+      applyTempRadioParams(918.0f, 62.5f, 7, 8, 2); // apply temporary radio params for 1 second
       sendFlood(packet, delay_millis, path_hash_size);  // send un-scoped
     }
   } else {
-    
+    applyTempRadioParams(918.0f, 62.5f, 7, 8, 2); // apply temporary radio params for 1 second
     sendFlood(packet, delay_millis, path_hash_size);  // send un-scoped
   }
 }
@@ -990,13 +991,13 @@ void MyMesh::sendFloodScoped(const TransportKey& scope, mesh::Packet* pkt, uint3
 }
 
 void MyMesh::applyTempRadioParams(float freq, float bw, uint8_t sf, uint8_t cr, int timeout_secs) {
-  set_radio_at = futureMillis(500); // give CLI reply some time to be sent back, before applying temp radio params
+  set_radio_at = futureMillis(100); // give CLI reply some time to be sent back, before applying temp radio params
   pending_freq = freq;
   pending_bw = bw;
   pending_sf = sf;
   pending_cr = cr;
 
-  revert_radio_at = futureMillis(2000 + timeout_secs * 1000); // schedule when to revert radio params
+  revert_radio_at = futureMillis(timeout_secs * 1000); // schedule when to revert radio params
 }
 
 bool MyMesh::formatFileSystem() {

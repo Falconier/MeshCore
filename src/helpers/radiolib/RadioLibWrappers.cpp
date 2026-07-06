@@ -211,3 +211,4 @@ float RadioLibWrapper::packetScoreInt(float snr, int sf, int packet_len) {
 
   return max(0.0, min(1.0, success_rate_based_on_snr * collision_penalty));
 }
+
